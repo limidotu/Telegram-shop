@@ -48,7 +48,7 @@ async def start(message: Message):
 
     markup = main_menu(role_data, chat, TgConfig.HELPER_URL)
     await bot.send_message(user_id,
-                           '⛩️ Основное меню',
+                           '🧬 Добро пожаловать в DNA shop Calgary!',
                            reply_markup=markup)
     await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
 
@@ -57,7 +57,7 @@ async def back_to_menu_callback_handler(call: CallbackQuery):
     bot, user_id = await get_bot_user_ids(call)
     user = check_user(call.from_user.id)
     markup = main_menu(user.role_id, TgConfig.CHANNEL_URL, TgConfig.HELPER_URL)
-    await bot.edit_message_text('⛩️ Основное меню',
+    await bot.edit_message_text('🧬 Добро пожаловать в DNA shop Calgary!',
                                 chat_id=call.message.chat.id,
                                 message_id=call.message.message_id,
                                 reply_markup=markup)
@@ -132,7 +132,7 @@ async def check_sub_to_channel(call: CallbackQuery):
         user = check_user(call.from_user.id)
         role = user.role_id
         markup = main_menu(role, chat, helper)
-        await bot.edit_message_text('⛩️ Основное меню', chat_id=call.message.chat.id,
+        await bot.edit_message_text('🧬 Добро пожаловать в DNA shop Calgary!', chat_id=call.message.chat.id,
                                     message_id=call.message.message_id, reply_markup=markup)
     else:
         await call.answer(text='Вы не подписались')

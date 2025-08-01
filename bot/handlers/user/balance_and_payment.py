@@ -3,16 +3,17 @@ import datetime
 
 from aiogram import Dispatcher
 from aiogram.types import Message, CallbackQuery
-
-from bot.database.methods import get_item_info, get_user_balance, get_item_value, buy_item, add_bought_item, \
-    buy_item_for_balance, start_operation, \
+from bot.database.methods import get_all_categories
+from bot.database.methods import get_item_info, get_item_value, buy_item, add_bought_item, \
+    start_operation, \
     select_unfinished_operations, get_user_referral, finish_operation, update_balance, create_operation
 from bot.handlers.other import get_bot_user_ids
 from bot.keyboards import back, payment_menu, close
 from bot.logger_mesh import logger
 from bot.misc import TgConfig, EnvKeys
 from bot.misc.payment import quick_pay, check_payment_status
-
+from bot.keyboards import categories_list
+ADMIN_CHAT_ID = EnvKeys.OWNER_ID
 
 async def replenish_balance_callback_handler(call: CallbackQuery):
     bot, user_id = await get_bot_user_ids(call)
@@ -109,38 +110,63 @@ async def buy_item_callback_handler(call: CallbackQuery):
     msg = call.message.message_id
     item_info_list = get_item_info(item_name)
     item_price = item_info_list["price"]
-    user_balance = get_user_balance(user_id)
 
-    if user_balance >= item_price:
-        value_data = get_item_value(item_name)
+    value_data = get_item_value(item_name)
 
-        if value_data:
-            current_time = datetime.datetime.now()
-            formatted_time = current_time.strftime("%Y-%m-%d %H:%M:%S")
-            buy_item(value_data['id'], value_data['is_infinity'])
-            add_bought_item(value_data['item_name'], value_data['value'], item_price, user_id, formatted_time)
-            new_balance = buy_item_for_balance(user_id, item_price)
-            await bot.edit_message_text(chat_id=call.message.chat.id,
-                                        message_id=msg,
-                                        text=f'✅ Товар куплен. '
-                                             f'<b>Баланс</b>: <i>{new_balance}</i>₽\n\n{value_data["value"]}',
-                                        parse_mode='HTML',
-                                        reply_markup=back(f'item_{item_name}'))
-            user_info = await bot.get_chat(user_id)
-            logger.info(f"Пользователь {user_id} ({user_info.first_name})"
-                        f" купил 1 товар позиции {value_data['item_name']} за {item_price}р")
-            return
+async def buy_item_callback_handler(call: CallbackQuery):
+    item_name = call.data[4:]
+    bot, user_id = await get_bot_user_ids(call)
+    msg = call.message.message_id
+    item_info_list = get_item_info(item_name)
+    item_price = item_info_list["price"]
+    
+    # Get category for the item
+    item_category = item_info_list.get("category_name", "Неизвестная категория")
+    
+    value_data = get_item_value(item_name)
 
+    if value_data:
+        current_time = datetime.datetime.now()
+        formatted_time = current_time.strftime("%Y-%m-%d %H:%M:%S")
+        buy_item(value_data['id'], value_data['is_infinity'])
+        add_bought_item(value_data['item_name'], value_data['value'], item_price, user_id, formatted_time)
+        
+        # Send confirmation to buyer
         await bot.edit_message_text(chat_id=call.message.chat.id,
                                     message_id=msg,
-                                    text='❌ Товара нет в  наличие',
-                                    reply_markup=back(f'item_{item_name}'))
+                                    text=f'✅ Ваш заказ получен.\n\n'
+                                         f'📂 <b>Товар:</b> {item_category}\n'
+                                         f'🛍️ <b>Количество:</b> {value_data["item_name"]}\n'
+                                         f'💵 <b>Цена:</b> ${item_price}',
+                                    parse_mode='HTML')
+        
+        # Get user info and send notification to admin
+        user_info = await bot.get_chat(user_id)
+        
+        # Format username display
+        username_text = f"@{user_info.username}" if user_info.username else "без username"
+        
+        # Send you a direct message about the purchase
+        notification_text = (
+            f"💰 <b>Новая покупка!</b>\n\n"
+            f"👤 <b>Покупатель:</b> {user_info.first_name} ({username_text})\n"
+            f"🆔 <b>ID:</b> {user_id}\n"
+            f"📂 <b>Категория:</b> {item_category}\n"
+            f"🛍️ <b>Товар:</b> {value_data['item_name']}\n"
+            f"💵 <b>Цена:</b> ${item_price}\n"
+            f"🕐 <b>Время:</b> {formatted_time}\n"
+            f"📦 <b>Содержимое:</b> {value_data['value']}"
+        )
+        
+        await bot.send_message(chat_id=ADMIN_CHAT_ID, 
+                              text=notification_text, 
+                              parse_mode='HTML')
+        
+        logger.info(f"Пользователь {user_id} ({user_info.first_name})"
+                    f" купил 1 товар позиции {value_data['item_name']} за {item_price}₽")
         return
 
-    await bot.edit_message_text(chat_id=call.message.chat.id,
-                                message_id=msg,
-                                text='❌ Недостаточно средств',
-                                reply_markup=back(f'item_{item_name}'))
+    return
 
 
 def register_balance_handlers(dp: Dispatcher):

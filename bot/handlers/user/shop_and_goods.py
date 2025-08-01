@@ -77,14 +77,13 @@ async def item_info_callback_handler(call: CallbackQuery):
     TgConfig.STATE[user_id] = None
     item_info_list = get_item_info(item_name)
     category = item_info_list['category_name']
-    quantity = 'Количество - неограниченно'
+    quantity = 'Количество - информация в группе'
     if not check_value(item_name):
         quantity = f'Количество - {select_item_values_amount(item_name)}шт.'
     markup = item_info(item_name, category)
     await bot.edit_message_text(
-        f'🏪 Товар {item_name}\n'
-        f'Описание: {item_info_list["description"]}\n'
-        f'Цена - {item_info_list["price"]}₽\n'
+        f'{item_name}\n'
+        f'{item_info_list["description"]}\n'
         f'{quantity}',
         chat_id=call.message.chat.id,
         message_id=call.message.message_id,
@@ -135,9 +134,11 @@ async def bought_item_info_callback_handler(call: CallbackQuery):
     bot, user_id = await get_bot_user_ids(call)
     TgConfig.STATE[user_id] = None
     item = get_bought_item_info(item_id)
+    
+    
     await bot.edit_message_text(
         f'<b>Товар</b>: <code>{item["item_name"]}</code>\n'
-        f'<b>Цена</b>: <code>{item["price"]}</code>₽\n'
+        f'<b>Цена</b>: <code>{item["price"]}</code>\n'
         f'<b>Дата покупки</b>: <code>{item["bought_datetime"]}</code>\n'
         f'<b>Уникальный ID</b>: <code>{item["unique_id"]}</code>\n'
         f'<b>Значение</b>:\n<code>{item["value"]}</code>',

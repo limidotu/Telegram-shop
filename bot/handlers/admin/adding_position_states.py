@@ -206,7 +206,7 @@ async def finish_adding_item_callback_handler(message: Message):
                 text=(
                     f'🎁 Залив\n'
                     f'🏷️ Товар: <b>{item_name}</b>\n'
-                    f'📦 Количество: <b>неограниченно</b>'
+                    f'📦 Количество: <b>Информация в группе</b>'
                 ),
                 parse_mode='HTML'
             )

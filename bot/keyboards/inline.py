@@ -5,7 +5,7 @@ def main_menu(role: int, channel: str = None, helper: str = None) -> InlineKeybo
     inline_keyboard = [
         [
             InlineKeyboardButton('🏪 Магазин', callback_data='shop'),
-            InlineKeyboardButton('📜 Правила', callback_data='rules'),
+            InlineKeyboardButton('📜 FAQ', callback_data='rules'),
         ],
         [InlineKeyboardButton('👤 Профиль', callback_data='profile')],
     ]
