@@ -2,7 +2,7 @@ import asyncio
 import datetime
 
 from aiogram import Dispatcher
-from aiogram.types import Message, CallbackQuery
+from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 from bot.database.methods import get_all_categories
 from bot.database.methods import get_item_info, get_item_value, buy_item, add_bought_item, \
     start_operation, \
@@ -130,6 +130,10 @@ async def buy_item_callback_handler(call: CallbackQuery):
         formatted_time = current_time.strftime("%Y-%m-%d %H:%M:%S")
         buy_item(value_data['id'], value_data['is_infinity'])
         add_bought_item(value_data['item_name'], value_data['value'], item_price, user_id, formatted_time)
+
+        # go back to menu
+        markup = InlineKeyboardMarkup()
+        markup.add(InlineKeyboardButton('🔙 Вернуться в меню', callback_data='back_to_menu'))
         
         # Send confirmation to buyer
         await bot.edit_message_text(chat_id=call.message.chat.id,
@@ -138,7 +142,8 @@ async def buy_item_callback_handler(call: CallbackQuery):
                                          f'📂 <b>Товар:</b> {item_category}\n'
                                          f'🛍️ <b>Количество:</b> {value_data["item_name"]}\n'
                                          f'💵 <b>Цена:</b> ${item_price}',
-                                    parse_mode='HTML')
+                                    parse_mode='HTML',
+                                    reply_markup=markup) 
         
         # Get user info and send notification to admin
         user_info = await bot.get_chat(user_id)
